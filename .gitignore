@@ -1,0 +1,22 @@
+# Binary (root only, not cmd/forge-host/)
+/forge-host
+/forge-host-*
+/forge-host-tray
+/forge-host-tray-*
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Internal docs
+docs/
+
+# Claude Code
+.claude/

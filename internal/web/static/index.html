@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forge</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0c0e;
+  --sb: #111113;
+  --card: #161618;
+  --br: rgba(255,255,255,0.07);
+  --t: #efefef;
+  --m: #555;
+  --h: #333;
+  --acc: #E8500A;
+  --gr: #1D9E75;
+  --re: #E24B4A;
+  --bl: #378ADD;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--t);
+  font-size: 13px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 210px;
+  background: var(--sb);
+  border-right: 1px solid var(--br);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.logo {
+  padding: 16px 14px 14px;
+  border-bottom: 1px solid var(--br);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-text { font-size: 15px; font-weight: 500; letter-spacing: -0.3px; }
+.logo-sub { font-size: 10px; color: var(--m); margin-top: 1px; font-family: 'SF Mono', 'Courier New', monospace; }
+
+.nav { flex: 1; padding: 8px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--m);
+  transition: all 0.1s;
+  user-select: none;
+  font-size: 13px;
+}
+
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--t); }
+.nav-item.active { background: rgba(255,255,255,0.07); color: var(--t); }
+.nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
+.nav-item.active svg { opacity: 1; }
+
+.nav-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--gr);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--br);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gr); flex-shrink: 0; }
+.status-ip { font-size: 11px; color: var(--m); font-family: 'SF Mono', 'Courier New', monospace; }
+
+/* Main */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 22px;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.section-title { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+.section-sub { font-size: 12px; color: var(--m); margin-bottom: 16px; }
+
+.uptime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(29,158,117,0.1);
+  border: 1px solid rgba(29,158,117,0.2);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--gr);
+  font-family: 'SF Mono', 'Courier New', monospace;
+  margin-bottom: 16px;
+}
+
+.uptime-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gr); flex-shrink: 0; }
+
+/* Metric grid */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--br);
+  border-radius: 8px;
+  padding: 13px;
+}
+
+.metric-label { font-size: 10px; color: var(--m); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.metric-value { font-size: 22px; font-weight: 500; font-family: 'SF Mono', 'Courier New', monospace; letter-spacing: -0.5px; }
+.metric-sub { font-size: 10px; color: var(--h); margin-top: 3px; font-family: 'SF Mono', 'Courier New', monospace; }
+.sparkline { width: 100%; height: 28px; margin-top: 8px; display: block; }
+.metric-bar { height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; margin-top: 6px; overflow: hidden; }
+.metric-fill { height: 100%; border-radius: 1px; background: var(--acc); }
+
+/* Info grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.info-card {
+  background: var(--card);
+  border: 1px solid var(--br);
+  border-radius: 8px;
+  padding: 13px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.info-row + .info-row { border-top: 1px solid var(--br); }
+.info-key { font-size: 11px; color: var(--m); }
+.info-val { font-size: 11px; font-family: 'SF Mono', 'Courier New', monospace; color: var(--t); }
+.info-val.green { color: var(--gr); }
+.info-val.orange { color: var(--acc); }
+.info-val.blue { color: var(--bl); }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--br);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 10px;
+  color: var(--h);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 12px;
+}
+
+/* Toggle rows */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+}
+
+.toggle-row + .toggle-row { border-top: 1px solid var(--br); }
+.toggle-label { font-size: 13px; }
+.toggle-desc { font-size: 11px; color: var(--m); margin-top: 2px; }
+
+.toggle {
+  width: 36px; height: 20px;
+  background: var(--h);
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.toggle.on { background: var(--gr); }
+.toggle.disabled { opacity: 0.35; cursor: not-allowed; }
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform 0.15s;
+}
+
+.toggle.on::after { transform: translateX(16px); }
+
+/* Buttons */
+.btn-row { display: flex; gap: 8px; margin-top: 14px; }
+
+.btn {
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--br);
+  background: rgba(255,255,255,0.05);
+  color: var(--t);
+  font-family: inherit;
+  transition: all 0.1s;
+}
+
+.btn:hover { background: rgba(255,255,255,0.1); }
+
+.btn.danger {
+  border-color: rgba(226,75,74,0.3);
+  color: var(--re);
+  background: rgba(226,75,74,0.06);
+}
+
+.btn.danger:hover { background: rgba(226,75,74,0.12); }
+
+/* Session rows */
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+}
+
+.session-row + .session-row { border-top: 1px solid var(--br); }
+.session-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gr); flex-shrink: 0; }
+.session-user { font-size: 13px; font-family: 'SF Mono', 'Courier New', monospace; }
+.session-ip { font-size: 11px; color: var(--m); font-family: 'SF Mono', 'Courier New', monospace; margin-top: 2px; }
+.session-time { font-size: 11px; color: var(--h); margin-left: auto; }
+
+/* Device rows */
+.device-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+}
+
+.device-row + .device-row { border-top: 1px solid var(--br); }
+
+.device-icon {
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.device-icon svg { width: 14px; height: 14px; }
+.device-name { font-size: 13px; }
+.device-ip { font-size: 11px; color: var(--m); font-family: 'SF Mono', 'Courier New', monospace; margin-top: 1px; }
+.device-status { margin-left: auto; font-size: 11px; color: var(--gr); }
+.device-status.this { color: var(--acc); }
+.device-status.offline { color: var(--m); }
+
+.empty-state { font-size: 12px; color: var(--m); padding: 8px 0; }
+
+/* Process rows */
+.proc-header, .proc-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 70px 50px 30px;
+  gap: 8px;
+  padding: 5px 0;
+  align-items: center;
+}
+.proc-header { font-size: 10px; color: var(--h); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--br); padding-bottom: 6px; margin-bottom: 2px; }
+.proc-row + .proc-row { border-top: 1px solid var(--br); }
+.proc-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proc-val { font-size: 11px; font-family: 'SF Mono', 'Courier New', monospace; color: var(--m); text-align: right; }
+.proc-kill { font-size: 9px; color: var(--re); cursor: pointer; opacity: 0; transition: opacity 0.1s; text-align: right; }
+.proc-row:hover .proc-kill { opacity: 1; }
+.proc-sort-btn { padding: 2px 8px !important; font-size: 9px !important; text-transform: uppercase; letter-spacing: 0.05em; }
+.proc-sort-btn.active { background: rgba(255,255,255,0.1) !important; color: var(--t) !important; }
+
+/* Environment */
+.env-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.env-item { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.02); }
+.env-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.env-dot.found { background: var(--gr); }
+.env-dot.missing { background: var(--h); }
+.env-name { font-size: 11px; }
+.env-ver { font-size: 10px; color: var(--m); font-family: 'SF Mono', 'Courier New', monospace; margin-left: auto; }
+
+/* Copy value */
+.copy-val { cursor: pointer; }
+.copy-val:hover { color: var(--acc); }
+
+/* Connection lost banner */
+.conn-lost {
+  display: none;
+  background: rgba(226,75,74,0.12);
+  border-bottom: 1px solid rgba(226,75,74,0.2);
+  color: var(--re);
+  font-size: 11px;
+  padding: 6px 22px;
+  text-align: center;
+}
+
+/* Activity */
+.activity-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.activity-row + .activity-row { border-top: 1px solid var(--br); }
+.activity-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+.activity-badge.toggle { background: rgba(55,138,221,0.15); color: var(--bl); }
+.activity-badge.power { background: rgba(226,75,74,0.15); color: var(--re); }
+.activity-badge.system { background: rgba(232,80,10,0.15); color: var(--acc); }
+.activity-badge.daemon { background: rgba(29,158,117,0.15); color: var(--gr); }
+.activity-badge.access { background: rgba(255,255,255,0.07); color: var(--t); }
+.activity-detail { font-size: 12px; flex: 1; }
+.activity-time { font-size: 10px; color: var(--h); font-family: 'SF Mono', 'Courier New', monospace; flex-shrink: 0; }
+
+/* Version block */
+.version-block { text-align: center; padding: 16px 0; }
+.version-num { font-size: 32px; font-weight: 500; font-family: 'SF Mono', 'Courier New', monospace; letter-spacing: -1px; }
+.version-label { font-size: 12px; color: var(--m); margin-top: 4px; }
+.version-status { font-size: 11px; color: var(--gr); margin-top: 5px; }
+
+/* Confirm dialog overlay */
+.overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.overlay.show { display: flex; }
+
+.dialog {
+  background: #1a1a1c;
+  border: 1px solid var(--br);
+  border-radius: 10px;
+  padding: 20px;
+  width: 280px;
+}
+
+.dialog-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+.dialog-desc { font-size: 12px; color: var(--m); margin-bottom: 16px; line-height: 1.5; }
+.dialog-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Tooltip */
+.tooltip { position: relative; }
+.tooltip .tooltip-text {
+  visibility: hidden;
+  background: #222;
+  color: var(--m);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  position: absolute;
+  right: 110%;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  z-index: 10;
+}
+.tooltip:hover .tooltip-text { visibility: visible; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">
+      <img src="/favicon.png" width="32" height="32" style="border-radius:7px" />
+      <div>
+        <div class="logo-text">Forge</div>
+        <div class="logo-sub" id="machine-name">...</div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="nav-item active" data-section="overview">
+        <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        Overview
+        <div class="nav-dot"></div>
+      </div>
+      <div class="nav-item" data-section="power">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1.5v5M5.2 3.4A5.5 5.5 0 1 0 10.8 3.4"/></svg>
+        Power
+      </div>
+      <div class="nav-item" data-section="connections">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="3" cy="8" r="1.5"/><circle cx="13" cy="4" r="1.5"/><circle cx="13" cy="12" r="1.5"/><path d="M4.5 8h3l1.5-4h3M4.5 8h3l1.5 4h3"/></svg>
+        Connections
+        <div class="nav-dot" id="conn-dot" style="display:none"></div>
+      </div>
+      <div class="nav-item" data-section="activity">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 8H10l-1.5-3L6 11 4.5 8H2"/></svg>
+        Activity
+      </div>
+      <div class="nav-item" data-section="about">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 7v4M8 5.5v.01"/></svg>
+        About
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="status-dot"></div>
+      <div class="status-ip" id="tailscale-ip">...</div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="conn-lost" id="conn-lost">Connection lost — dashboard data may be stale</div>
+  <main class="main">
+
+    <!-- Overview -->
+    <div class="section active" id="section-overview">
+      <div class="section-title">Overview</div>
+      <div class="section-sub" id="overview-sub">...</div>
+      <div class="uptime-badge">
+        <div class="uptime-badge-dot"></div>
+        <span id="uptime-text">loading...</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-label">CPU</div>
+          <div class="metric-value" id="cpu-val">--%</div>
+          <div class="metric-sub" id="cpu-sub">...</div>
+          <svg class="sparkline" id="spark-cpu" viewBox="0 0 120 28" preserveAspectRatio="none"></svg>
+          <div class="metric-bar"><div class="metric-fill" id="cpu-bar" style="width:0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Memory</div>
+          <div class="metric-value" id="mem-val">--</div>
+          <div class="metric-sub" id="mem-sub">...</div>
+          <svg class="sparkline" id="spark-mem" viewBox="0 0 120 28" preserveAspectRatio="none"></svg>
+          <div class="metric-bar"><div class="metric-fill" id="mem-bar" style="width:0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Disk</div>
+          <div class="metric-value" id="disk-val">--</div>
+          <div class="metric-sub" id="disk-sub">...</div>
+          <svg class="sparkline" id="spark-disk" viewBox="0 0 120 28" preserveAspectRatio="none"></svg>
+          <div class="metric-bar"><div class="metric-fill" id="disk-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-row"><span class="info-key">Tailscale IP</span><span class="info-val orange" id="ip-display">...</span></div>
+          <div class="info-row"><span class="info-key">SSH</span><span class="info-val" id="ssh-overview">...</span></div>
+          <div class="info-row"><span class="info-key">Hostname</span><span class="info-val" id="hostname-display">...</span></div>
+          <div class="info-row" id="ssh-cmd-row" style="display:none"><span class="info-key">Connect</span><span class="info-val copy-val" id="ssh-cmd" onclick="copySSH()" title="Click to copy">...</span></div>
+        </div>
+        <div class="info-card">
+          <div class="info-row"><span class="info-key">Sleep</span><span class="info-val" id="sleep-overview">...</span></div>
+          <div class="info-row"><span class="info-key">Auto-login</span><span class="info-val" id="autologin-overview">...</span></div>
+          <div class="info-row"><span class="info-key">Forge</span><span class="info-val" id="version-overview">...</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Top processes</span>
+          <span style="display:flex;gap:4px">
+            <button class="btn proc-sort-btn active" id="sort-cpu" onclick="setProcessSort('cpu')">CPU</button>
+            <button class="btn proc-sort-btn" id="sort-mem" onclick="setProcessSort('mem')">Memory</button>
+          </span>
+        </div>
+        <div id="processes-container">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Environment</div>
+        <div id="env-container" class="env-grid">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Power -->
+    <div class="section" id="section-power">
+      <div class="section-title">Power</div>
+      <div class="section-sub">Sleep prevention and machine controls</div>
+      <div class="card">
+        <div class="card-title">Sleep settings</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Keep awake</div><div class="toggle-desc">Prevent machine from sleeping</div></div>
+          <div class="toggle" id="toggle-sleep" onclick="handleToggle(this, 'sleep')"></div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Keep display on</div><div class="toggle-desc">Prevent display from turning off</div></div>
+          <div class="toggle" id="toggle-display" onclick="handleToggle(this, 'display-sleep')"></div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Keep disks active</div><div class="toggle-desc">Prevent disks from spinning down</div></div>
+          <div class="toggle" id="toggle-disk" onclick="handleToggle(this, 'disk-sleep')"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Schedule</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Power schedule</div><div class="toggle-desc">Automatically sleep and wake on a daily schedule</div></div>
+          <div class="toggle" id="toggle-schedule" onclick="toggleSchedule()"></div>
+        </div>
+        <div id="schedule-fields" style="display:none;padding-top:10px;border-top:1px solid var(--br);margin-top:8px">
+          <div style="display:flex;gap:16px;align-items:center">
+            <div>
+              <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">Sleep at</label>
+              <input type="time" id="schedule-sleep" class="host-input" style="width:auto" value="00:00" />
+            </div>
+            <div>
+              <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">Wake at</label>
+              <input type="time" id="schedule-wake" class="host-input" style="width:auto" value="06:00" />
+            </div>
+            <button class="btn" id="schedule-save-btn" onclick="saveSchedule()" style="margin-top:14px">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="wol-card" style="display:none">
+        <div class="card-title">Wake-on-LAN</div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Wake-on-LAN</div>
+            <div class="toggle-desc" id="wol-desc">Allow this machine to be woken remotely</div>
+          </div>
+          <div class="toggle" id="toggle-wol" onclick="handleToggle(this, 'wol')"></div>
+        </div>
+        <div id="wol-mac" style="display:none;padding-top:8px;border-top:1px solid var(--br);margin-top:8px">
+          <span style="font-size:10px;color:var(--m)">MAC Address</span>
+          <span style="font-size:11px;font-family:'SF Mono','Courier New',monospace;float:right" id="wol-mac-addr"></span>
+        </div>
+      </div>
+      <div class="card" id="autologin-card" style="display:none">
+        <div class="card-title">Login</div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Auto-login</div>
+            <div class="toggle-desc" id="autologin-desc">Automatically log in after restart</div>
+          </div>
+          <div class="tooltip">
+            <div class="toggle" id="toggle-autologin" onclick="handleToggle(this, 'auto-login')"></div>
+            <span class="tooltip-text" id="autologin-tooltip" style="display:none">FileVault is enabled</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Actions</div>
+        <div class="btn-row">
+          <button class="btn" onclick="showConfirm('restart')">Restart</button>
+          <button class="btn danger" onclick="showConfirm('shutdown')">Shut down</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connections -->
+    <div class="section" id="section-connections">
+      <div class="section-title">Connections</div>
+      <div class="section-sub">SSH, screen sharing, and Tailscale devices</div>
+      <div class="card">
+        <div class="card-title">Access</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Remote login (SSH)</div><div class="toggle-desc">Accept incoming SSH connections</div></div>
+          <div class="toggle" id="toggle-ssh" onclick="handleToggle(this, 'ssh')"></div>
+        </div>
+        <div class="toggle-row" id="vnc-row">
+          <div>
+            <div class="toggle-label">Screen sharing (VNC)</div>
+            <div class="toggle-desc" id="vnc-desc">Remote screen viewing and control</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn" id="vnc-install-btn" style="display:none" onclick="installVNC()">Install</button>
+            <div class="toggle" id="toggle-vnc" onclick="handleToggle(this, 'screensharing')"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active SSH sessions</div>
+        <div id="sessions-container">
+          <div class="empty-state">No active SSH sessions</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tailscale devices</div>
+        <div id="devices-container">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="section" id="section-activity">
+      <div class="section-title">Activity</div>
+      <div class="section-sub">Recent actions and events</div>
+      <div class="card">
+        <div id="activity-container">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="section" id="section-about">
+      <div class="section-title">About</div>
+      <div class="section-sub">Version and maintenance</div>
+      <div class="card">
+        <div class="version-block">
+          <svg width="40" height="40" viewBox="0 0 32 32" fill="none" style="margin-bottom:10px">
+            <rect width="32" height="32" rx="8" fill="#E8500A"/>
+            <path d="M10 22 L10 14 L16 8 L22 14 L22 22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M13 22 L13 17 L19 17 L19 22" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M8 22 L24 22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div class="version-num" id="version-num">...</div>
+          <div class="version-label">Current version</div>
+          <div class="version-status" id="version-status">Up to date</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Maintenance</div>
+        <div class="btn-row">
+          <button class="btn" id="update-btn" onclick="checkForUpdates()">Check for updates</button>
+          <button class="btn danger" onclick="showConfirm('uninstall')">Uninstall Forge</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Confirm dialog -->
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <div class="dialog-title" id="dialog-title">Confirm</div>
+    <div class="dialog-desc" id="dialog-desc">Are you sure?</div>
+    <div class="dialog-btns">
+      <button class="btn" onclick="hideConfirm()">Cancel</button>
+      <button class="btn danger" id="dialog-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- State ---
+let state = { system: null, power: null, connections: null, version: null };
+
+// --- API helpers ---
+function api(path) {
+  return fetch('/api' + path).then(r => r.json()).catch(() => null);
+}
+
+function apiPost(path, body) {
+  return fetch('/api' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Forge-Confirm': 'true' },
+    body: JSON.stringify(body)
+  }).then(r => r.json()).catch(() => null);
+}
+
+// --- Nav ---
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const s = item.dataset.section;
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('section-' + s).classList.add('active');
+    if (s === 'activity') loadActivity();
+  });
+});
+
+// --- Toggles ---
+const toggleEndpoints = {
+  'sleep': '/power/sleep',
+  'display-sleep': '/power/display-sleep',
+  'disk-sleep': '/power/disk-sleep',
+  'auto-login': '/power/auto-login',
+  'wol': '/power/wol',
+  'ssh': '/connections/ssh',
+  'screensharing': '/connections/screensharing'
+};
+
+// Sleep toggles have inverted semantics: toggle ON = prevention active = send enabled:false
+const invertedToggleKeys = new Set(['sleep', 'display-sleep', 'disk-sleep']);
+
+async function handleToggle(el, key) {
+  if (el.classList.contains('disabled')) return;
+
+  // Optimistic toggle
+  el.classList.toggle('on');
+  const isOn = el.classList.contains('on');
+
+  // For sleep toggles: ON means "prevent sleep" so we send enabled:false
+  const enabled = invertedToggleKeys.has(key) ? !isOn : isOn;
+
+  const result = await apiPost(toggleEndpoints[key], { enabled });
+  if (!result || result.error) {
+    // Revert on failure
+    el.classList.toggle('on');
+  }
+  // Refresh state
+  pollAll();
+}
+
+// --- Copy SSH ---
+window.copySSH = function() {
+  const el = document.getElementById('ssh-cmd');
+  const cmd = el.textContent;
+  const orig = cmd;
+
+  // Try modern clipboard API first, fall back to execCommand for HTTP
+  const done = () => { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = orig; }, 1500); };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(cmd).then(done);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = cmd;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    done();
+  }
+};
+
+// --- Schedule ---
+window.toggleSchedule = function() {
+  const el = document.getElementById('toggle-schedule');
+  const enabling = !el.classList.contains('on');
+  if (enabling) {
+    el.classList.add('on');
+    document.getElementById('schedule-fields').style.display = '';
+  } else {
+    el.classList.remove('on');
+    document.getElementById('schedule-fields').style.display = 'none';
+    apiPost('/power/schedule', { enabled: false }).then(() => pollAll());
+  }
+};
+
+window.saveSchedule = async function() {
+  const btn = document.getElementById('schedule-save-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  const result = await apiPost('/power/schedule', {
+    enabled: true,
+    sleepTime: document.getElementById('schedule-sleep').value,
+    wakeTime: document.getElementById('schedule-wake').value,
+  });
+  if (result && !result.error) {
+    btn.textContent = 'Saved';
+    setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; }, 2000);
+  } else {
+    btn.textContent = 'Failed';
+    setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; }, 2000);
+  }
+  pollAll();
+};
+
+// --- Install VNC ---
+async function installVNC() {
+  const btn = document.getElementById('vnc-install-btn');
+  btn.textContent = 'Installing...';
+  btn.disabled = true;
+  const result = await apiPost('/connections/screensharing/install', {});
+  if (result && !result.error) {
+    btn.textContent = 'Installed';
+    pollAll();
+  } else {
+    btn.textContent = 'Failed';
+    document.getElementById('vnc-desc').textContent = (result && result.error) || 'Install failed';
+    setTimeout(() => { btn.textContent = 'Retry'; btn.disabled = false; }, 3000);
+  }
+}
+
+// --- Confirm dialog ---
+const confirmMessages = {
+  restart: { title: 'Restart machine', desc: 'The machine will restart. Your SSH session will disconnect and reconnect in about 30 seconds.' },
+  shutdown: { title: 'Shut down machine', desc: 'The machine will shut down. You will need physical access or Wake-on-LAN to turn it back on.' },
+  uninstall: { title: 'Uninstall Forge', desc: 'The Forge daemon, tray app, and web UI will be removed. SSH, sleep settings, and Tailscale will not be changed.' },
+};
+
+const confirmEndpoints = {
+  restart: '/power/restart',
+  shutdown: '/power/shutdown',
+  uninstall: '/uninstall',
+};
+
+function showConfirm(action) {
+  const msg = confirmMessages[action];
+  document.getElementById('dialog-title').textContent = msg.title;
+  document.getElementById('dialog-desc').textContent = msg.desc;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('dialog-confirm-btn').onclick = () => {
+    hideConfirm();
+    if (confirmEndpoints[action]) {
+      apiPost(confirmEndpoints[action], {});
+    }
+  };
+}
+
+function hideConfirm() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+document.getElementById('overlay').addEventListener('click', function(e) {
+  if (e.target === this) hideConfirm();
+});
+
+// --- Rendering ---
+function renderSystem(data) {
+  if (!data) return;
+  state.system = data;
+
+  document.getElementById('machine-name').textContent = data.hostname;
+  document.getElementById('overview-sub').textContent = data.hostname + ' \u00B7 ' + data.os + ' \u00B7 ' + data.cpuModel;
+  document.getElementById('uptime-text').textContent = 'online \u00B7 ' + data.uptime + ' uptime';
+
+  // CPU
+  const cpuPct = Math.round(data.cpuPercent);
+  document.getElementById('cpu-val').textContent = cpuPct + '%';
+  document.getElementById('cpu-sub').textContent = data.cpuCores + '-core \u00B7 ' + data.cpuModel;
+  document.getElementById('cpu-bar').style.width = cpuPct + '%';
+
+  // Memory
+  document.getElementById('mem-val').textContent = data.memUsedGB.toFixed(1);
+  document.getElementById('mem-sub').textContent = 'of ' + Math.round(data.memTotalGB) + ' GB used';
+  document.getElementById('mem-bar').style.width = Math.round(data.memPercent) + '%';
+
+  // Disk
+  document.getElementById('disk-val').textContent = Math.round(data.diskUsedGB);
+  document.getElementById('disk-sub').textContent = 'of ' + Math.round(data.diskTotalGB) + ' GB used';
+  document.getElementById('disk-bar').style.width = Math.round(data.diskPercent) + '%';
+
+  document.getElementById('hostname-display').textContent = data.hostname;
+
+  // Dynamic page title
+  document.title = 'Forge \u2014 ' + data.hostname;
+}
+
+function renderVersion(data) {
+  if (!data) return;
+  state.version = data;
+  document.getElementById('version-overview').textContent = data.version;
+  document.getElementById('version-num').textContent = data.version.replace(/^v/, '');
+}
+
+function renderPower(data) {
+  if (!data) return;
+  state.power = data;
+
+  const sleep = data.sleep;
+  // Toggle "on" means prevention is active (sleep is NOT enabled)
+  setToggle('toggle-sleep', !sleep.sleepEnabled);
+  setToggle('toggle-display', !sleep.displaySleepEnabled);
+  setToggle('toggle-disk', !sleep.diskSleepEnabled);
+
+  // Overview status
+  const sleepEl = document.getElementById('sleep-overview');
+  if (!sleep.sleepEnabled) {
+    sleepEl.textContent = 'always awake';
+    sleepEl.className = 'info-val green';
+  } else {
+    sleepEl.textContent = 'can sleep';
+    sleepEl.className = 'info-val';
+  }
+
+  // Schedule
+  const sched = data.schedule;
+  if (sched) {
+    setToggle('toggle-schedule', sched.enabled);
+    document.getElementById('schedule-fields').style.display = sched.enabled ? '' : 'none';
+    if (sched.sleepTime) document.getElementById('schedule-sleep').value = sched.sleepTime;
+    if (sched.wakeTime) document.getElementById('schedule-wake').value = sched.wakeTime;
+  }
+
+  // Wake-on-LAN
+  const wol = data.wol;
+  const wolCard = document.getElementById('wol-card');
+  if (wol && wol.supported) {
+    wolCard.style.display = '';
+    setToggle('toggle-wol', wol.enabled);
+    if (wol.macAddr) {
+      document.getElementById('wol-mac').style.display = '';
+      document.getElementById('wol-mac-addr').textContent = wol.macAddr;
+    }
+  } else {
+    wolCard.style.display = 'none';
+  }
+
+  // Auto-login
+  const al = data.autoLogin;
+  const alOverview = document.getElementById('autologin-overview');
+  const alCard = document.getElementById('autologin-card');
+
+  if (al.supported) {
+    alCard.style.display = '';
+    if (al.fileVaultActive) {
+      setToggle('toggle-autologin', false);
+      document.getElementById('toggle-autologin').classList.add('disabled');
+      document.getElementById('autologin-tooltip').style.display = '';
+      document.getElementById('autologin-desc').textContent = 'Unavailable \u2014 FileVault is enabled';
+      alOverview.textContent = 'FileVault on';
+      alOverview.className = 'info-val';
+    } else {
+      document.getElementById('toggle-autologin').classList.remove('disabled');
+      document.getElementById('autologin-tooltip').style.display = 'none';
+      document.getElementById('autologin-desc').textContent = 'Automatically log in after restart';
+      setToggle('toggle-autologin', al.enabled);
+      alOverview.textContent = al.enabled ? 'enabled' : 'disabled';
+      alOverview.className = al.enabled ? 'info-val green' : 'info-val';
+    }
+  } else {
+    alCard.style.display = 'none';
+    alOverview.textContent = 'n/a';
+    alOverview.className = 'info-val';
+  }
+}
+
+function renderConnections(data) {
+  if (!data) return;
+  state.connections = data;
+
+  // SSH toggle
+  setToggle('toggle-ssh', data.ssh.enabled);
+
+  // SSH overview
+  const sshEl = document.getElementById('ssh-overview');
+  const sessionCount = (data.sessions || []).length;
+  if (data.ssh.enabled) {
+    sshEl.textContent = sessionCount > 0 ? 'active \u00B7 ' + sessionCount + ' session' + (sessionCount > 1 ? 's' : '') : 'active';
+    sshEl.className = 'info-val green';
+  } else {
+    sshEl.textContent = 'off';
+    sshEl.className = 'info-val';
+  }
+
+  // Connections dot
+  document.getElementById('conn-dot').style.display = sessionCount > 0 ? '' : 'none';
+
+  // Screen sharing (VNC)
+  if (data.screenSharing.supported === false) {
+    setToggle('toggle-vnc', false);
+    document.getElementById('toggle-vnc').classList.add('disabled');
+    document.getElementById('vnc-desc').textContent = 'No VNC server installed';
+    document.getElementById('vnc-install-btn').style.display = '';
+  } else {
+    document.getElementById('toggle-vnc').classList.remove('disabled');
+    document.getElementById('vnc-desc').textContent = 'Remote screen viewing and control';
+    document.getElementById('vnc-install-btn').style.display = 'none';
+    setToggle('toggle-vnc', data.screenSharing.enabled);
+  }
+
+  // Sessions
+  const sc = document.getElementById('sessions-container');
+  if (!data.sessions || data.sessions.length === 0) {
+    sc.innerHTML = '<div class="empty-state">No active SSH sessions</div>';
+  } else {
+    sc.innerHTML = data.sessions.map(s =>
+      '<div class="session-row">' +
+        '<div class="session-dot"></div>' +
+        '<div>' +
+          '<div class="session-user">' + esc(s.user) + '</div>' +
+          '<div class="session-ip">' + (s.source ? 'from ' + esc(s.source) : 'local') + '</div>' +
+        '</div>' +
+        '<div class="session-time">' + esc(s.duration || '') + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  // Tailscale IP (from self device)
+  const selfDevice = (data.devices || []).find(d => d.isSelf);
+  if (selfDevice) {
+    document.getElementById('tailscale-ip').textContent = selfDevice.ip;
+    document.getElementById('ip-display').textContent = selfDevice.ip;
+    // SSH command
+    const hostname = state.system ? state.system.hostname : '';
+    const user = (data.sessions && data.sessions.length > 0) ? data.sessions[0].user : 'user';
+    const sshCmd = 'ssh ' + user + '@' + selfDevice.ip;
+    document.getElementById('ssh-cmd').textContent = sshCmd;
+    document.getElementById('ssh-cmd-row').style.display = '';
+  }
+
+  // Devices
+  const dc = document.getElementById('devices-container');
+  if (!data.devices || data.devices.length === 0) {
+    dc.innerHTML = '<div class="empty-state">No Tailscale devices found</div>';
+  } else {
+    dc.innerHTML = data.devices.map(d => {
+      const icon = deviceIcon(d.os);
+      const statusClass = d.isSelf ? 'this' : (d.online ? '' : 'offline');
+      const statusText = d.isSelf ? 'this machine' : (d.online ? 'online' : 'offline');
+      return '<div class="device-row">' +
+        '<div class="device-icon">' + icon + '</div>' +
+        '<div><div class="device-name">' + esc(d.name) + '</div><div class="device-ip">' + esc(d.ip) + '</div></div>' +
+        '<div class="device-status ' + statusClass + '">' + statusText + '</div>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+function deviceIcon(os) {
+  os = (os || '').toLowerCase();
+  if (os.includes('ios') || os.includes('iphone'))
+    return '<svg viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"><rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><circle cx="8" cy="12" r="0.75" fill="#555"/></svg>';
+  if (os.includes('android'))
+    return '<svg viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"><rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><circle cx="8" cy="12" r="0.75" fill="#555"/></svg>';
+  if (os.includes('ipad'))
+    return '<svg viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="8" cy="12.5" r="0.5" fill="#555"/></svg>';
+  if (os.includes('mac') && !os.includes('book'))
+    return '<svg viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="8" rx="1"/><path d="M5 13h6M8 11v2"/></svg>';
+  // Default: laptop
+  return '<svg viewBox="0 0 16 16" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="12" height="8" rx="1"/><path d="M6 4V3h4v1M5 13h6"/></svg>';
+}
+
+function setToggle(id, on) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (on) el.classList.add('on');
+  else el.classList.remove('on');
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// --- Updates ---
+async function checkForUpdates() {
+  const btn = document.getElementById('update-btn');
+  const status = document.getElementById('version-status');
+  btn.textContent = 'Checking...';
+  btn.disabled = true;
+
+  const data = await api('/update/check');
+  if (!data) {
+    status.textContent = 'Could not check for updates';
+    status.style.color = 'var(--m)';
+    btn.textContent = 'Check for updates';
+    btn.disabled = false;
+    return;
+  }
+
+  if (data.updateAvailable) {
+    status.textContent = 'Update available: ' + data.latestVersion;
+    status.style.color = 'var(--acc)';
+    btn.textContent = 'Update to ' + data.latestVersion;
+    btn.disabled = false;
+    btn.onclick = () => doUpdate(data.latestVersion);
+  } else {
+    status.textContent = 'Up to date';
+    status.style.color = 'var(--gr)';
+    btn.textContent = 'Check for updates';
+    btn.disabled = false;
+  }
+}
+
+async function doUpdate(version) {
+  const btn = document.getElementById('update-btn');
+  const status = document.getElementById('version-status');
+  btn.textContent = 'Updating...';
+  btn.disabled = true;
+  status.textContent = 'Downloading ' + version + '...';
+
+  const result = await apiPost('/update', {});
+  if (result && !result.error) {
+    status.textContent = 'Updated! Restarting...';
+    // Poll until the new version is running
+    setTimeout(async () => {
+      for (let i = 0; i < 15; i++) {
+        const ver = await api('/version');
+        if (ver) {
+          status.textContent = 'Updated to ' + ver.version;
+          status.style.color = 'var(--gr)';
+          document.getElementById('version-num').textContent = ver.version.replace(/^v/, '');
+          document.getElementById('version-overview').textContent = ver.version;
+          btn.textContent = 'Check for updates';
+          btn.disabled = false;
+          btn.onclick = checkForUpdates;
+          return;
+        }
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      status.textContent = 'Updated, but daemon may need manual restart';
+      btn.textContent = 'Check for updates';
+      btn.disabled = false;
+      btn.onclick = checkForUpdates;
+    }, 2000);
+  } else {
+    status.textContent = 'Update failed: ' + ((result && result.error) || 'unknown error');
+    status.style.color = 'var(--re)';
+    btn.textContent = 'Retry';
+    btn.disabled = false;
+  }
+}
+
+// --- Processes ---
+let processSort = 'cpu';
+
+window.setProcessSort = function(sort) {
+  processSort = sort;
+  document.getElementById('sort-cpu').classList.toggle('active', sort === 'cpu');
+  document.getElementById('sort-mem').classList.toggle('active', sort === 'mem');
+  pollAll();
+};
+
+window.killProcess = async function(pid, name) {
+  if (!confirm('Kill "' + name + '" (PID ' + pid + ')?')) return;
+  await apiPost('/processes/kill?pid=' + pid, {});
+  LogActivity && pollAll();
+  pollAll();
+};
+
+function renderProcesses(procs) {
+  const container = document.getElementById('processes-container');
+  if (!procs || procs.length === 0) {
+    container.innerHTML = '<div class="empty-state">No processes</div>';
+    return;
+  }
+  let html = '<div class="proc-header"><span>Name</span><span class="proc-val">CPU</span><span class="proc-val">Mem</span><span class="proc-val">PID</span><span></span></div>';
+  procs.forEach(p => {
+    const cpuStr = p.cpu < 1 ? p.cpu.toFixed(1) + '%' : Math.round(p.cpu) + '%';
+    const memStr = p.memMB < 1024 ? Math.round(p.memMB) + ' MB' : (p.memMB / 1024).toFixed(1) + ' GB';
+    html += '<div class="proc-row">' +
+      '<span class="proc-name">' + esc(p.name) + '</span>' +
+      '<span class="proc-val">' + cpuStr + '</span>' +
+      '<span class="proc-val">' + memStr + '</span>' +
+      '<span class="proc-val">' + p.pid + '</span>' +
+      '<span class="proc-kill" onclick="killProcess(' + p.pid + ',\'' + esc(p.name).replace(/'/g, "\\'") + '\')">kill</span>' +
+    '</div>';
+  });
+  container.innerHTML = html;
+}
+
+// --- Activity ---
+function renderActivity(events) {
+  const container = document.getElementById('activity-container');
+  if (!events || events.length === 0) {
+    container.innerHTML = '<div class="empty-state">No activity yet</div>';
+    return;
+  }
+  container.innerHTML = events.map(e => {
+    const date = new Date(e.time);
+    const timeStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' +
+                    date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return '<div class="activity-row">' +
+      '<span class="activity-badge ' + esc(e.action) + '">' + esc(e.action) + '</span>' +
+      '<span class="activity-detail">' + esc(e.detail) + '</span>' +
+      '<span class="activity-time">' + timeStr + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+async function loadActivity() {
+  const data = await api('/activity');
+  renderActivity(data);
+}
+
+// --- Environment ---
+function renderEnvironment(tools) {
+  if (!tools || tools.length === 0) return;
+  const container = document.getElementById('env-container');
+  container.innerHTML = tools.map(t =>
+    '<div class="env-item">' +
+      '<div class="env-dot ' + (t.found ? 'found' : 'missing') + '"></div>' +
+      '<span class="env-name">' + esc(t.name) + '</span>' +
+      (t.found ? '<span class="env-ver">' + esc(t.version) + '</span>' : '') +
+    '</div>'
+  ).join('');
+}
+
+// --- Sparklines ---
+const SPARK_MAX = 60; // 60 samples = 5 minutes at 5s polling
+const sparkHistory = { cpu: [], mem: [], disk: [] };
+
+function pushSparkValue(key, val) {
+  sparkHistory[key].push(val);
+  if (sparkHistory[key].length > SPARK_MAX) sparkHistory[key].shift();
+}
+
+function renderSparkline(svgId, data, color) {
+  const svg = document.getElementById(svgId);
+  if (!svg || data.length < 2) return;
+
+  const w = 120, h = 28;
+  const max = 100;
+  const step = w / (SPARK_MAX - 1);
+  const offset = SPARK_MAX - data.length;
+
+  // Build polyline points
+  const points = data.map((v, i) => {
+    const x = (offset + i) * step;
+    const y = h - (v / max) * h;
+    return x + ',' + y;
+  }).join(' ');
+
+  // Build fill polygon (area under the line)
+  const firstX = offset * step;
+  const lastX = (offset + data.length - 1) * step;
+  const fillPoints = firstX + ',' + h + ' ' + points + ' ' + lastX + ',' + h;
+
+  svg.innerHTML =
+    '<polygon points="' + fillPoints + '" fill="' + color + '" opacity="0.1"/>' +
+    '<polyline points="' + points + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
+}
+
+function updateSparklines(data) {
+  if (!data) return;
+  pushSparkValue('cpu', data.cpuPercent);
+  pushSparkValue('mem', data.memPercent);
+  pushSparkValue('disk', data.diskPercent);
+  renderSparkline('spark-cpu', sparkHistory.cpu, '#E8500A');
+  renderSparkline('spark-mem', sparkHistory.mem, '#378ADD');
+  renderSparkline('spark-disk', sparkHistory.disk, '#1D9E75');
+}
+
+// --- Polling ---
+async function pollAll() {
+  const [sys, ver, pwr, conn, procs] = await Promise.all([
+    api('/system'),
+    api('/version'),
+    api('/power'),
+    api('/connections'),
+    api('/processes?sort=' + processSort)
+  ]);
+
+  // Connection lost detection
+  const lost = !sys && !ver;
+  document.getElementById('conn-lost').style.display = lost ? 'block' : 'none';
+
+  renderSystem(sys);
+  updateSparklines(sys);
+  renderProcesses(procs);
+  renderVersion(ver);
+  renderPower(pwr);
+  renderConnections(conn);
+}
+
+// Initial load + polling
+pollAll();
+setInterval(pollAll, 5000);
+
+// Load environment once
+api('/environment').then(renderEnvironment);
+</script>
+
+</body>
+</html>
