@@ -31,7 +31,7 @@ From any device — laptop, tablet, phone — you SSH in and **re-attach**. Not 
 <p align="center">
   <img src="assets/diagram.svg" width="100%" />
   <br>
-  <em>Your devices become thin clients. Your host does the work — whether you're watching or not.</em>
+  <em>Your devices become thin clients. Your host does the work.</em>
 </p>
 
 Forge installs a daemon on your host machine that:
