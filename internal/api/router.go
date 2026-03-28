@@ -42,6 +42,14 @@ func NewRouter(p system.Platform) http.Handler {
 	mux.HandleFunc("POST /api/connections/screensharing", RequireConfirm(handleSetScreenSharing(p)))
 	mux.HandleFunc("POST /api/connections/screensharing/install", RequireConfirm(handleInstallScreenSharing(p)))
 
+	// Files
+	mux.HandleFunc("GET /api/files/list", handleFilesList)
+	mux.HandleFunc("POST /api/files/mkdir", RequireConfirm(handleFilesMkdir))
+	mux.HandleFunc("POST /api/files/rename", RequireConfirm(handleFilesRename))
+	mux.HandleFunc("POST /api/files/delete", RequireConfirm(handleFilesDelete))
+	mux.HandleFunc("GET /api/files/download", handleFilesDownload)
+	mux.HandleFunc("POST /api/files/upload", RequireConfirm(handleFilesUpload))
+
 	// Activity
 	mux.HandleFunc("GET /api/activity", handleGetActivity)
 
