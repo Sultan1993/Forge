@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Forge</title>
 <link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -387,6 +389,47 @@ body {
 .device-status { margin-left: auto; font-size: 11px; color: var(--gr); font-weight: 500; }
 .device-status.this { color: var(--acc); }
 .device-status.offline { color: var(--m); }
+
+/* ── Tmux rows ── */
+.tmux-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.tmux-row + .tmux-row { border-top: 1px solid var(--br); }
+.tmux-row > div:first-child { flex: 1; min-width: 0; }
+.tmux-name { font-size: 13px; font-family: var(--mono); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.tmux-meta { font-size: 11px; color: var(--m); margin-top: 2px; font-weight: 400; }
+.tmux-status {
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+.tmux-status.attached { background: var(--gr-dim); color: var(--gr); }
+.tmux-status.detached { background: rgba(255,255,255,0.06); color: var(--m); }
+.tmux-copy {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--m);
+  cursor: pointer;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-family: var(--sans);
+  font-weight: 500;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.tmux-copy:hover { color: var(--t); background: rgba(255,255,255,0.06); }
+.tmux-copy.danger { color: var(--re); border-color: rgba(239,68,68,0.25); }
+.tmux-copy.danger:hover { background: var(--re-dim); }
 
 .empty-state { font-size: 12px; color: var(--m); padding: 10px 0; }
 
@@ -1125,6 +1168,32 @@ window.copySSH = function() {
   }
 };
 
+// --- Copy tmux command ---
+window.copyTmux = function(btn, cmd) {
+  const orig = btn.textContent;
+  const done = () => { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = orig; }, 1500); };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(cmd).then(done);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = cmd;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    done();
+  }
+};
+
+// --- Kill tmux session ---
+window.killTmux = async function(name) {
+  if (!confirm('Kill tmux session "' + name + '"?')) return;
+  await apiPost('/connections/tmux/kill', { name: name });
+  pollAll();
+};
+
 // --- Schedule ---
 window.toggleSchedule = function() {
   const el = document.getElementById('toggle-schedule');
@@ -1394,6 +1463,28 @@ function renderConnections(data) {
         '<div class="device-icon">' + icon + '</div>' +
         '<div><div class="device-name">' + esc(d.name) + '</div><div class="device-ip">' + esc(d.ip) + '</div></div>' +
         '<div class="device-status ' + statusClass + '">' + statusText + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Tmux sessions
+  const tmuxIp = selfDevice ? selfDevice.ip : '100.x.x.x';
+  const tmuxUser = (data.sessions && data.sessions.length > 0) ? data.sessions[0].user : 'user';
+  const tc = document.getElementById('tmux-container');
+  if (!data.tmux || data.tmux.length === 0) {
+    tc.innerHTML = '<div class="empty-state">No tmux sessions</div>';
+  } else {
+    tc.innerHTML = data.tmux.map(t => {
+      const statusClass = t.attached ? 'attached' : 'detached';
+      const statusText = t.attached ? 'attached' : 'detached';
+      const cmd = 'ssh ' + tmuxUser + '@' + tmuxIp + " -t 'tmux attach -t " + esc(t.name) + "'";
+      return '<div class="tmux-row">' +
+        '<div>' +
+          '<div class="tmux-name">' + esc(t.name) + ' <span class="tmux-status ' + statusClass + '">' + statusText + '</span></div>' +
+          '<div class="tmux-meta">' + esc(t.windows) + '</div>' +
+        '</div>' +
+        '<button class="tmux-copy" onclick="copyTmux(this, \'' + cmd.replace(/'/g, "\\'") + '\')" title="' + esc(cmd) + '">Copy SSH</button>' +
+        '<button class="tmux-copy danger" onclick="killTmux(\'' + esc(t.name).replace(/'/g, "\\'") + '\')">Kill</button>' +
       '</div>';
     }).join('');
   }

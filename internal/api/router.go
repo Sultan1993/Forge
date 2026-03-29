@@ -41,6 +41,7 @@ func NewRouter(p system.Platform) http.Handler {
 	mux.HandleFunc("POST /api/connections/ssh", RequireConfirm(handleSetSSH(p)))
 	mux.HandleFunc("POST /api/connections/screensharing", RequireConfirm(handleSetScreenSharing(p)))
 	mux.HandleFunc("POST /api/connections/screensharing/install", RequireConfirm(handleInstallScreenSharing(p)))
+	mux.HandleFunc("POST /api/connections/tmux/kill", RequireConfirm(handleKillTmuxSession))
 
 	// Files
 	mux.HandleFunc("GET /api/files/list", handleFilesList)
