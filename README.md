@@ -89,7 +89,7 @@ Once Forge is running, your workflow looks like this:
 5. **Screen share when you need a GUI** — enable VNC from the dashboard and connect with any VNC client. Full desktop access to your host, from anywhere.
 
    <p align="center">
-     <img src="assets/vnc.jpg" width="100%" />
+     <img src="assets/vnc.png" width="100%" />
      <br>
      <em>Screen sharing into the host from another device.</em>
    </p>
@@ -103,18 +103,22 @@ That's it. Your host does the heavy lifting. Your devices just connect.
 Access `http://<tailscale-ip>:8080` from any device on your Tailscale network.
 
 <p align="center">
-  <img src="assets/dashboard.jpg" width="100%" />
+  <img src="assets/dashboard.png" width="100%" />
 </p>
 
 **Overview** — CPU, memory, and disk with live sparkline charts. Top processes with CPU/memory sort and kill button. Installed dev tools. Uptime, Tailscale IP, SSH status, and a one-click copy SSH command.
 
 **Power** — Toggle sleep prevention (system, display, disk). Wake-on-LAN with MAC address display. Power schedule for automatic daily sleep/wake. Auto-login toggle. Restart and shutdown with confirmation.
 
-**Connections** — Toggle SSH and screen sharing (VNC). Active SSH sessions with user, source IP, and duration. Tailscale device list with online status. VNC server install button for Linux hosts.
+**Connections** — Toggle SSH and screen sharing (VNC). Active SSH sessions with user, source IP, and duration. Tailscale device list with online status. Tmux session explorer with one-click copy of the SSH attach command and kill button. VNC server install button for Linux hosts.
+
+**Storage** — Browse, upload, download, rename, and delete files on your host. Drag-and-drop upload. All from the browser — no SFTP client needed.
 
 **Activity** — Timestamped log of all actions: connections, toggle changes, restarts, updates. Stored to disk, auto-rotates weekly.
 
 **About** — Version display, check for updates with one-click upgrade, uninstall.
+
+The dashboard is fully responsive — works on phones and tablets with a bottom tab bar, touch-sized controls, and stacked layouts.
 
 ### Menu Bar Icon
 
